@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+import subprocess
+import shlex
+import argparse
+
+def ret_curr_res():
+    xrandr_out = subprocess.getoutput(['xrandr'])
+    llist      = [x.strip() for x in xrandr_out.split('\n')]
+    curr_rline = llist[2]
+    items      = [x.strip() for x in curr_rline.split(' ')]
+    curr_res   = [int(x) for x in items[0].split('x')]
+    frate      = float(items[-3][:-3])
+    return (curr_res, frate)
+# enddef
+
+def set_new_res(scale_factor, brightness=1.0):
+    current_res, frate = ret_curr_res()
+    new_res            = [int(scale_factor * x) for x in current_res]
+    curr_res_str       = 'x'.join([str(x) for x in current_res])
+    new_res_str        = 'x'.join([str(x) for x in new_res])
+    xrandr_cmd         = 'xrandr --output eDP-1 --mode {orig_res} --rate {frate} --fb {new_res} \
+    		--panning {new_res} --scale-from {new_res} --brightness {brightness}'.format(orig_res=curr_res_str,
+                        frate=frate, new_res=new_res_str, brightness=brightness)
+    print(xrandr_cmd)
+    subprocess.call(shlex.split(xrandr_cmd))
+# enddef
+
+if __name__ == '__main__':
+    parser  = argparse.ArgumentParser()
+    parser.add_argument('--scale', help='Scale factor', type=float, default=1.15)
+    parser.add_argument('--brightness', help='Brightness', type=float, default=1.0)
+    args    = parser.parse_args()
+    
+    set_new_res(args.__dict__['scale'], args.__dict__['brightness'])
+# endif
